@@ -62,7 +62,7 @@ class SummaryOutput
                 'totalFiles' => $totalFiles,
                 'issues' => $issues,
                 'testing' => $summary->isDryRun(),
-                'preset' => $this->presets[$this->config->preset()],
+                'preset' => $this->presets[$this->config->preset()] ?? "Remote preset: {$this->config->preset()}",
             ]),
         );
 

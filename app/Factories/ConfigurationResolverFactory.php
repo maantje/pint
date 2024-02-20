@@ -5,7 +5,7 @@ namespace App\Factories;
 use App\Project;
 use App\Repositories\ConfigurationJsonRepository;
 use ArrayIterator;
-use PhpCsFixer\Config;
+use PhpCsFixer\ConfigInterface;
 use PhpCsFixer\Console\ConfigurationResolver;
 use PhpCsFixer\ToolInfo;
 
@@ -39,20 +39,14 @@ class ConfigurationResolverFactory
 
         $preset = $localConfiguration->preset();
 
-        if (! in_array($preset, static::$presets)) {
+        if (! in_array($preset, static::$presets) && ! self::isRemotePreset($preset)) {
             abort(1, 'Preset not found.');
         }
 
         $resolver = new ConfigurationResolver(
-            new Config('default'),
+            self::config($preset),
             [
                 'allow-risky' => 'yes',
-                'config' => implode(DIRECTORY_SEPARATOR, [
-                    dirname(__DIR__, 2),
-                    'resources',
-                    'presets',
-                    sprintf('%s.php', $preset),
-                ]),
                 'diff' => $output->isVerbose(),
                 'dry-run' => $input->getOption('test'),
                 'path' => $path,
@@ -78,5 +72,31 @@ class ConfigurationResolverFactory
         )));
 
         return [$resolver, $totalFiles];
+    }
+
+    private static function isRemotePreset(string $preset): bool
+    {
+        return str_starts_with($preset, 'http://') || str_starts_with($preset, 'https://');
+    }
+
+    private static function pathForPredefinedPreset(string $preset): string
+    {
+        return implode(DIRECTORY_SEPARATOR, [
+            dirname(__DIR__, 2),
+            'resources',
+            'presets',
+            sprintf('%s.json', $preset),
+        ]);
+    }
+
+    private static function config(string $preset): ConfigInterface
+    {
+        $preset = !self::isRemotePreset($preset)
+            ? self::pathForPredefinedPreset($preset)
+            : $preset;
+
+        return ConfigurationFactory::preset(
+            json_decode(file_get_contents($preset), true)
+        );
     }
 }

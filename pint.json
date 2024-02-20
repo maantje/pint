@@ -1,5 +1,9 @@
 {
+    "preset": "https://pastebin.com/raw/N5TfqWZw",
+    "rules": {
+        "no_spaces_after_function_name": false
+    },
     "exclude": [
-        "tests/Fixtures"
+        "my/path"
     ]
 }
